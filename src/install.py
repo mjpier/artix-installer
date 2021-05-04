@@ -155,7 +155,7 @@ elif fs_type == "zfs":
 -O encryption=on \\
 -O keyformat=passphrase \\
 -O keylocation=prompt \\
-zroot /dev/disk/by-id/{root_id}""", shell=True)
+zroot {root_id}""", shell=True)
 
     # Create datasets
     run("zfs create -o mountpoint=none zroot/ROOT", shell=True)
