@@ -138,8 +138,13 @@ elif fs_type == "zfs":
             root_id = byid[:byid.find(" ")]
             break
     else:
-        print(f"\nSomething went wrong. No by-id file found for {root_part}.")
-        sys.exit()
+        for byid in by_ids:
+            if byid.endswith(root_part[5:]) and byid.startswith("/dev/disk/by-id/ata"):
+                root_id = byid[:byid.find(" ")]
+                break
+        else:
+            print(f"\nSomething went wrong. No by-id file found for {root_part}.")
+            sys.exit()
 
     run(f"""zpool create -o ashift=12 \\
 -O mountpoint=none \\
