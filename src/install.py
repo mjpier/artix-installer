@@ -60,7 +60,7 @@ if fs_type == "1":
     fs_type = "ext4"
     fs_pkgs = "cryptsetup lvm2 lvm2-openrc"
 elif fs_type == "2":
-    fs_type == "zfs"
+    fs_type = "zfs"
     fs_pkgs = "zfs-dkms"
     run("curl -L https://archzfs.com/archzfs.gpg |  pacman-key -a -", shell=True)
     run("curl -L https://git.io/JtQpl | xargs -i{} pacman-key --lsign-key {}", shell=True)
