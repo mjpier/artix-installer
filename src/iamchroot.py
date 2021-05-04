@@ -65,6 +65,7 @@ if fs_type == "zfs_member":
     run("curl -L https://git.io/JtQpl | xargs -i{} pacman-key --lsign-key {}", shell=True)
     run("curl -L https://git.io/JtQp4 > /etc/pacman.d/mirrorlist-archzfs", shell=True)
     run("printf '\n\n[archzfs]\nInclude = /etc/pacman.d/mirrorlist-archzfs\n' >> /etc/pacman.conf", shell=True)
+    run("modprobe zfs", shell=True)
 input("Configure pacman (color, multilib, etc.). [ENTER] ")
 run("nvim /etc/pacman.conf", shell=True)
 run("printf '\nkeyserver hkp://keyserver.ubuntu.com\n' >> /etc/pacman.d/gnupg/gpg.conf", shell=True)
