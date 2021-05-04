@@ -60,7 +60,7 @@ run(f"ln -sf /usr/share/zoneinfo/{region_city} /etc/localtime", shell=True)
 run("hwclock --systohc", shell=True)
 
 # Configure pacman
-if fs_type == "zfs":
+if fs_type == "zfs_member":
     run("curl -L https://archzfs.com/archzfs.gpg |  pacman-key -a -", shell=True)
     run("curl -L https://git.io/JtQpl | xargs -i{} pacman-key --lsign-key {}", shell=True)
     run("curl -L https://git.io/JtQp4 > /etc/pacman.d/mirrorlist-archzfs", shell=True)
@@ -127,7 +127,7 @@ root_part_uuid = check_output(f"sudo blkid {root_part} -o value -s UUID", shell=
 root_flags = ""
 if fs_type == "ext4":
     root_flags = f"cryptdevice=UUID={root_part_uuid}:cryptroot root=/dev/MyVolGrp/root"
-elif fs_type == "zfs":
+elif fs_type == "zfs_member":
     root_flags = f"zfs=bootfs"
 elif fs_type == "btrfs":
     root_flags = f"cryptdevice=UUID={root_part_uuid}:cryptroot root=/dev/mapper/cryptroot rootflags=subvol=@"
@@ -147,7 +147,7 @@ elif boot_loader == "grub":
     run("grub-mkconfig -o /boot/grub/grub.cfg", shell=True)
 
 # Local.start
-if fs_type == "zfs":
+if fs_type == "zfs_member":
     run(f"printf 'zfs mount -a\nrfkill unblock wifi\nneofetch >| /etc/issue\n' > /etc/local.d/local.start", shell=True)
 else:
     run(f"printf 'rfkill unblock wifi\nneofetch >| /etc/issue\n' > /etc/local.d/local.start", shell=True)
@@ -185,7 +185,7 @@ run(f"printf '\n{motd}\n\n' > /etc/motd", shell=True)
 
 if fs_type == "ext4":
     run("printf '\n/dev/MyVolGrp/swap\t\tswap\t\tswap\t\tdefaults\t0 0\n' >> /etc/fstab", shell=True)
-elif fs_type == "zfs":
+elif fs_type == "zfs_member":
     run("printf '\n/dev/zvol/zroot/swap\t\tnone\t\tswap\t\tdiscard\t0 0\n' >> /etc/fstab", shell=True)
 elif fs_type == "btrfs":
     run("printf '\n/dev/mapper/cryptswap\t\tswap\t\tswap\t\tdefaults\t0 0\n' >> /etc/fstab", shell=True)
@@ -201,7 +201,7 @@ run("printf 'deadbeef' > /etc/hostid", shell=True)
 if fs_type == "ext4":
     hooks_comment = "#HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)"
     bins_comment = "#BINARIES=()"
-elif fs_type == "zfs":
+elif fs_type == "zfs_member":
     hooks_comment = "#HOOKS=(base udev autodetect keyboard keymap modconf block zfs filesystems)"
     bins_comment = "#BINARIES=()"
 elif fs_type == "btrfs":

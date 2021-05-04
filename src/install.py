@@ -60,7 +60,7 @@ if fs_type == "1":
     fs_type = "ext4"
     fs_pkgs = "cryptsetup lvm2 lvm2-openrc"
 elif fs_type == "2":
-    fs_type = "zfs"
+    fs_type = "zfs_member"
     fs_pkgs = "zfs-dkms"
     run("curl -L https://archzfs.com/archzfs.gpg |  pacman-key -a -", shell=True)
     run("curl -L https://git.io/JtQpl | xargs -i{} pacman-key --lsign-key {}", shell=True)
@@ -85,7 +85,7 @@ if fs_type == "ext4":
 mkpart artix_root ext4 1GiB 100% \\
 set 2 lvm on \\
 align-check optimal 2""", shell=True)
-elif fs_type == "zfs":
+elif fs_type == "zfs_member":
     run(f"""parted -s {disk} \\
 mkpart artix_root 1GiB 100% \\
 align-check optimal 2""", shell=True)
@@ -130,7 +130,7 @@ if fs_type == "ext4":
     run("mkfs.ext4 /dev/MyVolGrp/root", shell=True)
 
     run("mount /dev/MyVolGrp/root /mnt", shell=True)
-elif fs_type == "zfs":
+elif fs_type == "zfs_member":
     root_id = ""
     by_ids = check_output("find /dev/disk/by-id -type l -printf '%p %l\n'", shell=True).strip().decode("utf-8").split("\n")
     for byid in by_ids:
