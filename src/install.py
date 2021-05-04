@@ -187,7 +187,7 @@ zroot {root_id}""", shell=True)
 -o sync=standard \\
 -o primarycache=metadata \\
 -o secondarycache=none \\
--o com.sum=auto-snapshot=false zroot/swap""", shell=True)
+-o com.sun=auto-snapshot=false zroot/swap""", shell=True)
     run("mkswap -f /dev/zvol/zroot/swap", shell=True)
 elif fs_type == "btrfs":
     run("mkswap /dev/mapper/cryptswap", shell=True)
