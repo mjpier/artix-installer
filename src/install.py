@@ -146,6 +146,8 @@ elif fs_type == "zfs":
             print(f"\nSomething went wrong. No by-id file found for {root_part}.")
             sys.exit()
 
+    print("zpool password must be 8 or more characters.")
+
     run(f"""zpool create -o ashift=12 \\
 -O mountpoint=none \\
 -O canmount=off \\
