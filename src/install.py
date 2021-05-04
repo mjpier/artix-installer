@@ -104,9 +104,9 @@ if choice == "y":
 run(f"sfdisk -l {disk}", shell=True)
 
 # Setup encrypted partitions
-cryptpass = make_password("\nSetting encryption password...\n")
-
 if fs_type == "ext4" or fs_type == "btrfs":
+    cryptpass = make_password("\nSetting encryption password...\n")
+
     luks_options = input("\nAdditional cryptsetup options (e.g. `--type luks1`): ").strip()
 
     run(f"echo '{cryptpass}' | cryptsetup -q luksFormat {luks_options} {root_part}", shell=True)
@@ -155,7 +155,7 @@ elif fs_type == "zfs":
 -O encryption=on \\
 -O keyformat=passphrase \\
 -O keylocation=prompt \\
-zroot /dev/disk/by-id/{root_id}""")
+zroot /dev/disk/by-id/{root_id}""", shell=True)
 
     # Create datasets
     run("zfs create -o mountpoint=none zroot/ROOT", shell=True)
