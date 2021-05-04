@@ -200,13 +200,12 @@ elif fs_type == "btrfs":
 
 run("nvim /etc/fstab", shell=True)
 
-run("printf 'deadbeef' > /etc/hostid", shell=True)
-
 # Configure mkinitcpio
 if fs_type == "ext4":
     hooks_comment = "#HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)"
     bins_comment = "#BINARIES=()"
 elif fs_type == "zfs_member":
+    run("printf 'deadbeef' > /etc/hostid", shell=True)
     hooks_comment = "#HOOKS=(base udev autodetect keyboard keymap modconf block zfs filesystems)"
     bins_comment = "#BINARIES=()"
 elif fs_type == "btrfs":
