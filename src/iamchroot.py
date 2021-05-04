@@ -143,11 +143,12 @@ elif boot_loader == "grub":
     input("Configure GRUB (boot options, encryption, console, etc.). [ENTER] ")
 
     run("nvim /etc/default/grub", shell=True)
-    run("grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ARTIXGRUB --removable --recheck", shell=True)
 
     if fs_type == "zfs_member":
+        run("ZPOOL_VDEV_NAME_PATH=1 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ARTIXGRUB --removable --recheck", shell=True)
         run("ZPOOL_VDEV_NAME_PATH=1 grub-mkconfig -o /boot/grub/grub.cfg", shell=True)
     else:
+        run("grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ARTIXGRUB --removable --recheck", shell=True)
         run("grub-mkconfig -o /boot/grub/grub.cfg", shell=True)
 
 # Local.start
