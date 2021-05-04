@@ -186,8 +186,7 @@ zroot {root_id}""", shell=True)
 -o logbias=throughput \\
 -o sync=standard \\
 -o primarycache=metadata \\
--o secondarycache=none \\
--o zroot/swap""", shell=True)
+-o secondarycache=none zroot/swap""", shell=True)
     run("mkswap -f /dev/zvol/zroot/swap", shell=True)
 elif fs_type == "btrfs":
     run("mkswap /dev/mapper/cryptswap", shell=True)
