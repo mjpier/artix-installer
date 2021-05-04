@@ -122,14 +122,16 @@ root_part_uuid = check_output(f"sudo blkid {root_part} -o value -s UUID", shell=
 root_flags = ""
 if fs_type == "ext4":
     root_flags = f"cryptdevice=UUID={root_part_uuid}:cryptroot root=/dev/MyVolGrp/root"
+elif fs_type == "zfs":
+    root_flags = f"zfs=bootfs"
 elif fs_type == "btrfs":
     root_flags = f"cryptdevice=UUID={root_part_uuid}:cryptroot root=/dev/mapper/cryptroot rootflags=subvol=@"
 
 if boot_loader == "refind":
-    run(f"printf '\"Boot with standard options\"  \"{root_flags} rw {ucode_img} initrd=initramfs-linux.img\"\n' > /boot/refind_linux.conf", shell=True)
-
     run("refind-install", shell=True)
     run(f"refind-install --usedefault {part1}", shell=True)
+
+    run(f"printf '\"Boot with standard options\"  \"{root_flags} rw {ucode_img} initrd=initramfs-linux.img\"\n' > /boot/efi/refind_linux.conf", shell=True)
 elif boot_loader == "grub":
     run(f"printf '\n#{root_flags}' >> /etc/default/grub", shell=True)
 
@@ -140,7 +142,10 @@ elif boot_loader == "grub":
     run("grub-mkconfig -o /boot/grub/grub.cfg", shell=True)
 
 # Local.start
-run(f"printf 'rfkill unblock wifi\nneofetch >| /etc/issue\n' > /etc/local.d/local.start", shell=True)
+if fs_type == "zfs":
+    run(f"printf 'zfs mount -a\nrfkill unblock wifi\nneofetch >| /etc/issue\n' > /etc/local.d/local.start", shell=True)
+else:
+    run(f"printf 'rfkill unblock wifi\nneofetch >| /etc/issue\n' > /etc/local.d/local.start", shell=True)
 run("chmod +x /etc/local.d/local.start", shell=True)
 
 # Add default user
@@ -175,6 +180,8 @@ run(f"printf '\n{motd}\n\n' > /etc/motd", shell=True)
 
 if fs_type == "ext4":
     run("printf '\n/dev/MyVolGrp/swap\t\tswap\t\tswap\t\tdefaults\t0 0\n' >> /etc/fstab", shell=True)
+elif fs_type == "zfs":
+    run("printf '\n/dev/zvol/zroot/swap\t\tnone\t\tswap\t\tdiscard\t0 0\n' >> /etc/fstab", shell=True)
 elif fs_type == "btrfs":
     run("printf '\n/dev/mapper/cryptswap\t\tswap\t\tswap\t\tdefaults\t0 0\n' >> /etc/fstab", shell=True)
     swap_uuid = check_output(f"sudo blkid {part2} -o value -s UUID", shell=True).strip().decode("utf-8")
@@ -183,9 +190,14 @@ elif fs_type == "btrfs":
 
 run("nvim /etc/fstab", shell=True)
 
+run("printf 'deadbeef' > /etc/hostid", shell=True)
+
 # Configure mkinitcpio
 if fs_type == "ext4":
     hooks_comment = "#HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)"
+    bins_comment = "#BINARIES=()"
+elif fs_type == "zfs":
+    hooks_comment = "#HOOKS=(base udev autodetect keyboard keymap modconf block zfs filesystems)"
     bins_comment = "#BINARIES=()"
 elif fs_type == "btrfs":
     hooks_comment = "#HOOKS=(base udev autodetect keyboard keymap modconf block encrypt openswap filesystems fsck)"

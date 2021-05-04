@@ -51,21 +51,29 @@ swap_size = int(swap_size)
 fs_type = input(
     "\nDesired filesystem:"
     "\n(1)  ext4"
-    "\n(2+) Btrfs\n: "
+    "\n(2)  ZFS"
+    "\n(3+) Btrfs\n: "
 ).strip()
 root_part = part2
 fs_pkgs = ""
 if fs_type == "1":
     fs_type = "ext4"
     fs_pkgs = "cryptsetup lvm2 lvm2-openrc"
+elif fs_type == "2":
+    fs_type == "zfs"
+    fs_pkgs = "zfs-dkms"
+    run("curl -L https://archzfs.com/archzfs.gpg |  pacman-key -a -", shell=True)
+    run("curl -L https://git.io/JtQpl | xargs -i{} pacman-key --lsign-key {}", shell=True)
+    run("curl -L https://git.io/JtQp4 > /etc/pacman.d/mirrorlist-archzfs", shell=True)
+    run("printf '\n\n[archzfs]\nInclude = /etc/pacman.d/mirrorlist-archzfs\n' >> /etc/pacman.conf", shell=True)
+    run("yes | pacman -Sy zfs-dkms", shell=True)
+    run("modprobe zfs", shell=True)
 else:
     fs_type = "btrfs"
     root_part = part3
     fs_pkgs = "cryptsetup btrfs-progs"
 
-print("\nBegin ignoring error messages:")
-run("./src/umount.sh", shell=True)
-print("End ignoring error messages.")
+run("./src/umount.sh > /dev/null 2>&1", shell=True)
 
 run(f"""parted -s {disk} mktable gpt \\
 mkpart artix_boot fat32 0% 1GiB \\
@@ -76,6 +84,10 @@ if fs_type == "ext4":
     run(f"""parted -s {disk} \\
 mkpart artix_root ext4 1GiB 100% \\
 set 2 lvm on \\
+align-check optimal 2""", shell=True)
+elif fs_type == "zfs":
+    run(f"""parted -s {disk} \\
+mkpart artix_root 1GiB 100% \\
 align-check optimal 2""", shell=True)
 elif fs_type == "btrfs":
     run(f"""parted -s {disk} \\
@@ -118,6 +130,58 @@ if fs_type == "ext4":
     run("mkfs.ext4 /dev/MyVolGrp/root", shell=True)
 
     run("mount /dev/MyVolGrp/root /mnt", shell=True)
+elif fs_type == "zfs":
+    root_id = ""
+    by_ids = check_output("find /dev/disk/by-id -type l -printf '%p %l\n'", shell=True).strip().decode("utf-8").split("\n")
+    for byid in by_ids:
+        if byid.endswith(root_part[5:]) and byid.startswith("/dev/disk/by-id/wwn"):
+            root_id = byid[:byid.find(" ")]
+            break
+    else:
+        print(f"\nSomething went wrong. No by-id file found for {root_part}.")
+        sys.exit()
+
+    run(f"""zpool create -o ashift=12 \\
+-O mountpoint=none \\
+-O canmount=off \\
+-O devices=off \\
+-R /mnt \\
+-O compression=lz4 \\
+-O encryption=on \\
+-O keyformat=passphrase \\
+-O keylocation=prompt \\
+zroot /dev/disk/by-id/{root_id}""")
+
+    # Create datasets
+    run("zfs create -o mountpoint=none zroot/ROOT", shell=True)
+    run("zfs create -o mountpoint=none zroot/data -o canmount=noauto", shell=True)
+    run("zfs create -o mountpoint=/ zroot/ROOT/default", shell=True)
+    run("zfs create -o mountpoint=/home zroot/data/home", shell=True)
+
+    # Mount
+    run("zpool export zroot", shell=True)
+    run("zpool import -d /dev/disk/by-id -R /mnt zroot -N", shell=True)
+    run("zfs load-key zroot", shell=True)
+    run("zfs mount zroot/ROOT/default", shell=True)
+    run("zfs mount -a", shell=True)
+
+    # Misc
+    run("zpool set bootfs=zroot/ROOT/default zroot", shell=True)
+    run("zpool set cachefile=/etc/zfs/zpool.cache zroot", shell=True)
+    run("mkdir /mnt/etc", shell=True)
+    run("mkdir /mnt/etc/zfs", shell=True)
+    run("cp /etc/zfs/zpool.cache /mnt/etc/zfs/", shell=True)
+
+    # Create swap
+    run(f"""zfs create -V {swap_size} \\
+-b $(getconf PAGESIZE) \\
+-o compression=zle \\
+-o logbias=throughput \\
+-o sync=standard \\
+-o primarycache=metadata \\
+-o secondarycache=none \\
+-o com.sum=auto-snapshot=false zroot/swap""", shell=True)
+    run("mkswap -f /dev/zvol/zroot/swap", shell=True)
 elif fs_type == "btrfs":
     run("mkswap /dev/mapper/cryptswap", shell=True)
     run("mkfs.btrfs /dev/mapper/cryptroot", shell=True)

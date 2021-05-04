@@ -24,4 +24,7 @@ sudo cp src/iamchroot.py /mnt/root/
 # chroot
 sudo artix-chroot /mnt /bin/bash -c "python /root/iamchroot.py $MY_DISK && exit"
 
+zfs umount -a > /dev/null 2>&1
+zpool export zroot > /dev/null 2>&1
+
 printf '\n`sudo artix-chroot /mnt /bin/bash` back into the system to make any final changes.\n\nYou may now poweroff.\n'
