@@ -96,9 +96,7 @@ cryptpass = ""
 if fs_type == "ext4" or fs_type == "btrfs":
     cryptpass = make_password("\nSetting encryption password...\n")
 
-    luks_options = input("\nAdditional cryptsetup options (e.g. `--type luks1`): ").strip()
-
-    run(f"echo '{cryptpass}' | cryptsetup -q luksFormat {luks_options} {root_part}", shell=True)
+    run(f"echo '{cryptpass}' | cryptsetup -q luksFormat {root_part}", shell=True)
     run(f"yes '{cryptpass}' | cryptsetup open {root_part} cryptroot", shell=True)
 
 if fs_type == "btrfs":

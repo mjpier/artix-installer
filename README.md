@@ -28,7 +28,6 @@ cd artix-installer
 * You don't mess up. The scripts will only hold your hand so far. Mistakes, of course, will either cause the script to kill itself or render your new system unbootable.
 * You know how to use vim as an editor.
 * You know what to do when the script drops you into a file to edit or verify. Comments are often dispensed at the bottom of files.
-* You're aware that you'll manually have to enter `--type luks1` as a LUKS option until GRUB gets upgraded from 2.0.4
 * You're aware that the rEFInd option will probably work but lacks full testing because of issues with QEMU. Submit an issue if it doesn't work.
 
 ## What you get
